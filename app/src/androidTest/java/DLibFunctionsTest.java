@@ -1,15 +1,13 @@
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
-import android.test.suitebuilder.annotation.SmallTest;
 
+import androidx.test.filters.SmallTest;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.tzutalin.dlib.PedestrianDet;
 import com.tzutalin.dlib.VisionDetRet;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import java.util.List;
 
 @RunWith(AndroidJUnit4.class)
@@ -20,7 +18,7 @@ public class DLibFunctionsTest {
 
     @Before
     public void setup() {
-        mInstrumantationCtx = InstrumentationRegistry.getTargetContext();
+        mInstrumantationCtx = InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
 
     @Test

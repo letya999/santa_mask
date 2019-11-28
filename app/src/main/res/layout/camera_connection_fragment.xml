@@ -9,11 +9,5 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignParentBottom="true" />
-    
-<!--    <com.renewal_studio.santa_mask.TrasparentTitleView
-        android:id="@+id/results"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_alignParentTop="true" />-->
-        
+
 </RelativeLayout>
