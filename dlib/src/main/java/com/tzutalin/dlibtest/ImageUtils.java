@@ -19,11 +19,11 @@ package com.tzutalin.dlibtest;
 import android.graphics.Bitmap;
 import android.os.Environment;
 import android.support.annotation.Keep;
+import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
 
-import timber.log.Timber;
 
 /**
  * Utility class for manipulating images.
@@ -54,11 +54,11 @@ public class ImageUtils {
     public static void saveBitmap(final Bitmap bitmap) {
         final String root =
                 Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "dlib";
-        Timber.tag(TAG).d(String.format("Saving %dx%d bitmap to %s.", bitmap.getWidth(), bitmap.getHeight(), root));
+        Log.d(TAG,String.format("Saving %dx%d bitmap to %s.", bitmap.getWidth(), bitmap.getHeight(), root));
         final File myDir = new File(root);
 
         if (!myDir.mkdirs()) {
-            Timber.tag(TAG).e("Make dir failed");
+            Log.d(TAG,"Make dir failed");
         }
 
         final String fname = "preview.png";
@@ -72,7 +72,7 @@ public class ImageUtils {
             out.flush();
             out.close();
         } catch (final Exception e) {
-            Timber.tag(TAG).e("Exception!", e);
+            Log.d(TAG,"Exception!", e);
         }
     }
 
