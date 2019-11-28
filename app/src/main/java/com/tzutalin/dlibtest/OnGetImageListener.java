@@ -43,8 +43,6 @@ import com.tzutalin.dlib.Constants;
 import com.tzutalin.dlib.FaceDet;
 import com.tzutalin.dlib.VisionDetRet;
 
-import junit.framework.Assert;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -129,7 +127,6 @@ public class OnGetImageListener implements OnImageAvailableListener {
             mScreenRotation = 0;
         }
 
-        Assert.assertEquals(dst.getWidth(), dst.getHeight());
         final float minDim = Math.min(src.getWidth(), src.getHeight());
 
         final Matrix matrix = new Matrix();
