@@ -1,8 +1,8 @@
 package com.renewal_studio.santa_mask;
 
+import android.graphics.Bitmap;
 import android.content.Context;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -12,7 +12,6 @@ import android.graphics.Point;
 import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
-import android.media.ImageReader.OnImageAvailableListener;
 import android.os.Handler;
 import android.os.Trace;
 import android.util.Log;
@@ -26,7 +25,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OnGetImageListener implements OnImageAvailableListener {
+public class DetectedFace {
     private static final boolean SAVE_PREVIEW_BITMAP = false;
     //324, 648, 972, 1296, 224, 448, 672, 976, 1344
     private static final int INPUT_SIZE = 976;
@@ -37,7 +36,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private int mPreviewHeight = 0;
     private byte[][] mYUVBytes;
     private int[] mRGBBytes = null;
-    private Bitmap mRGBframeBitmap = null;
+    //private Bitmap mRGBframeBitmap = null;
     private Bitmap mCroppedBitmap = null;
     private Bitmap mResizedBitmap = null;
     private Bitmap mInversedBipmap = null;
@@ -63,7 +62,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
     }
 
     public void deInitialize() {
-        synchronized (OnGetImageListener.this) {
+        synchronized (DetectedFace.this) {
             if (mFaceDet != null)
                 mFaceDet.release();
             if (mWindow != null)
@@ -109,56 +108,8 @@ public class OnGetImageListener implements OnImageAvailableListener {
         return inversedImage;
     }
 
-    @Override
-    public void onImageAvailable(final ImageReader reader) {
-        Image image = null;
-        try {
-            image = reader.acquireLatestImage();
-            if (image == null)
-                return;
-            if (mIsComputing) {
-                image.close();
-                return;
-            }
-            mIsComputing = true;
-            Trace.beginSection("imageAvailable");
-            final Plane[] planes = image.getPlanes();
-            if (mPreviewWdith != image.getWidth() || mPreviewHeight != image.getHeight()) {
-                mPreviewWdith = image.getWidth();
-                mPreviewHeight = image.getHeight();
-                mRGBBytes = new int[mPreviewWdith * mPreviewHeight];
-                mRGBframeBitmap = Bitmap.createBitmap(mPreviewWdith, mPreviewHeight, Config.ARGB_8888);
-                mCroppedBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888);
-                mYUVBytes = new byte[planes.length][];
-                for (int i = 0; i < planes.length; ++i)
-                    mYUVBytes[i] = new byte[planes[i].getBuffer().capacity()];
-            }
-            for (int i = 0; i < planes.length; ++i)
-                planes[i].getBuffer().get(mYUVBytes[i]);
-            final int yRowStride = planes[0].getRowStride();
-            final int uvRowStride = planes[1].getRowStride();
-            final int uvPixelStride = planes[1].getPixelStride();
-            ImageUtils.convertYUV420ToARGB8888(
-                    mYUVBytes[0],
-                    mYUVBytes[1],
-                    mYUVBytes[2],
-                    mRGBBytes,
-                    mPreviewWdith,
-                    mPreviewHeight,
-                    yRowStride,
-                    uvRowStride,
-                    uvPixelStride,
-                    false);
-
-            image.close();
-        } catch (final Exception e) {
-            if (image != null) {
-                image.close();
-            }
-            Trace.endSection();
-            return;
-        }
-        mRGBframeBitmap.setPixels(mRGBBytes, 0, mPreviewWdith, 0, 0, mPreviewWdith, mPreviewHeight);
+    public void onImageAvailable(Bitmap mRGBframeBitmap) {
+        mCroppedBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888);
         drawResizedBitmap(mRGBframeBitmap, mCroppedBitmap);
         mInversedBipmap = imageSideInversion(mCroppedBitmap);
         mResizedBitmap = Bitmap.createScaledBitmap(mInversedBipmap, (int)(INPUT_SIZE/4.5), (int)(INPUT_SIZE/4.5), true);
@@ -171,10 +122,10 @@ public class OnGetImageListener implements OnImageAvailableListener {
                         }
                         if(mframeNum % 3 == 0){
                             long startTime = System.currentTimeMillis();
-                            synchronized (OnGetImageListener.this) {
+                            synchronized (DetectedFace.this) {
                                 results = mFaceDet.detect(mResizedBitmap);
                             }
-			                long endTime = System.currentTimeMillis();
+                            long endTime = System.currentTimeMillis();
                         }
                         if (results.size() != 0) {
                             for (final VisionDetRet ret : results) {

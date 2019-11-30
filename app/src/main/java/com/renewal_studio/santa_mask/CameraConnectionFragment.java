@@ -353,10 +353,8 @@ public class CameraConnectionFragment extends Fragment {
             final SurfaceTexture texture = textureView.getSurfaceTexture();
             assert texture != null;
             texture.setDefaultBufferSize(previewSize.getWidth(), previewSize.getHeight());
-            final Surface surface = new Surface(texture);
             previewRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-            previewReader =
-                    ImageReader.newInstance(
+            previewReader = ImageReader.newInstance(
                             previewSize.getWidth(), previewSize.getHeight(), ImageFormat.YUV_420_888, 2);
             previewReader.setOnImageAvailableListener(mOnGetPreviewListener, backgroundHandler);
             previewRequestBuilder.addTarget(previewReader.getSurface());
