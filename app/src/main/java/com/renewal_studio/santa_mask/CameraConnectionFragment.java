@@ -3,12 +3,8 @@ package com.renewal_studio.santa_mask;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
 import android.app.Fragment;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.ImageFormat;
@@ -38,7 +34,6 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -53,7 +48,6 @@ public class CameraConnectionFragment extends Fragment {
     private static final int MINIMUM_PREVIEW_SIZE = 320;
     private static final String TAG = "CameraConnectionFragment";
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
-    private static final String FRAGMENT_DIALOG = "dialog";
     private HandlerThread backgroundThread;
     private Handler backgroundHandler;
     private HandlerThread inferenceThread;
@@ -67,6 +61,7 @@ public class CameraConnectionFragment extends Fragment {
     private CameraCaptureSession captureSession;
     private CameraDevice cameraDevice;
     private Size previewSize;
+    private final OnGetImageListener mOnGetPreviewListener = new OnGetImageListener();
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 0);
         ORIENTATIONS.append(Surface.ROTATION_90, 90);
@@ -135,29 +130,22 @@ public class CameraConnectionFragment extends Fragment {
                 }
             };
 
-    @SuppressLint("LongLogTag")
-    @DebugLog
-    private static Size chooseOptimalSize(
-            final Size[] choices, final int width, final int height, final Size aspectRatio) {
-        final List<Size> bigEnough = new ArrayList<Size>();
-        for (final Size option : choices) {
-            if (option.getHeight() >= MINIMUM_PREVIEW_SIZE && option.getWidth() >= MINIMUM_PREVIEW_SIZE) {
-                Log.d(TAG,"Adding size: " + option.getWidth() + "x" + option.getHeight());
-                bigEnough.add(option);
-            } else {
-                Log.d(TAG,"Not adding size: " + option.getWidth() + "x" + option.getHeight());
-            }
-        }
+    private final CameraCaptureSession.CaptureCallback captureCallback =
+            new CameraCaptureSession.CaptureCallback() {
+                @Override
+                public void onCaptureProgressed(
+                        final CameraCaptureSession session,
+                        final CaptureRequest request,
+                        final CaptureResult partialResult) {
+                }
 
-        if (bigEnough.size() > 0) {
-            final Size chosenSize = Collections.min(bigEnough, new CompareSizesByArea());
-            Log.d(TAG,"Chosen size: " + chosenSize.getWidth() + "x" + chosenSize.getHeight());
-            return chosenSize;
-        } else {
-            Log.d(TAG,"Couldn't find any suitable preview size");
-            return choices[0];
-        }
-    }
+                @Override
+                public void onCaptureCompleted(
+                        final CameraCaptureSession session,
+                        final CaptureRequest request,
+                        final TotalCaptureResult result) {
+                }
+            };
 
     public static CameraConnectionFragment newInstance() {
         return new CameraConnectionFragment();
@@ -175,11 +163,6 @@ public class CameraConnectionFragment extends Fragment {
     }
 
     @Override
-    public void onActivityCreated(final Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-    }
-
-    @Override
     public void onResume() {
         super.onResume();
         startBackgroundThread();
@@ -190,11 +173,39 @@ public class CameraConnectionFragment extends Fragment {
         }
     }
 
-    @Override
-    public void onPause() {
-        closeCamera();
-        stopBackgroundThread();
-        super.onPause();
+    @DebugLog
+    private void startBackgroundThread() {
+        backgroundThread = new HandlerThread("ImageListener");
+        backgroundThread.start();
+        backgroundHandler = new Handler(backgroundThread.getLooper());
+
+        inferenceThread = new HandlerThread("InferenceThread");
+        inferenceThread.start();
+        inferenceHandler = new Handler(inferenceThread.getLooper());
+    }
+
+
+    @SuppressLint("LongLogTag")
+    @DebugLog
+    private void openCamera(final int width, final int height) {
+        setUpCameraOutputs(width, height);
+        configureTransform(width, height);
+        final Activity activity = getActivity();
+        final CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
+        try {
+            if (!cameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
+                throw new RuntimeException("Time out waiting to lock camera opening.");
+            }
+            if (ActivityCompat.checkSelfPermission(this.getActivity(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG,"checkSelfPermission CAMERA");
+            }
+            manager.openCamera("1", stateCallback, backgroundHandler);
+            Log.d(TAG,"open Camera");
+        } catch (final CameraAccessException e) {
+            Log.d(TAG,"Exception!", e);
+        } catch (final InterruptedException e) {
+            throw new RuntimeException("Interrupted while trying to lock camera opening.", e);
+        }
     }
 
     @DebugLog
@@ -262,28 +273,27 @@ public class CameraConnectionFragment extends Fragment {
 
     @SuppressLint("LongLogTag")
     @DebugLog
-    private void openCamera(final int width, final int height) {
-        Log.d(TAG, "width "+width+"height "+height);
-        setUpCameraOutputs(width, height);
-        configureTransform(width, height);
-        final Activity activity = getActivity();
-        final CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
-        try {
-            if (!cameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
-                throw new RuntimeException("Time out waiting to lock camera opening.");
+    private static Size chooseOptimalSize(
+            final Size[] choices, final int width, final int height, final Size aspectRatio) {
+        final List<Size> bigEnough = new ArrayList<Size>();
+        for (final Size option : choices) {
+            if (option.getHeight() >= MINIMUM_PREVIEW_SIZE && option.getWidth() >= MINIMUM_PREVIEW_SIZE) {
+                Log.d(TAG,"Adding size: " + option.getWidth() + "x" + option.getHeight());
+                bigEnough.add(option);
+            } else {
+                Log.d(TAG,"Not adding size: " + option.getWidth() + "x" + option.getHeight());
             }
-            if (ActivityCompat.checkSelfPermission(this.getActivity(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                Log.d(TAG,"checkSelfPermission CAMERA");
-            }
-            manager.openCamera("1", stateCallback, backgroundHandler);
-            Log.d(TAG,"open Camera");
-        } catch (final CameraAccessException e) {
-            Log.d(TAG,"Exception!", e);
-        } catch (final InterruptedException e) {
-            throw new RuntimeException("Interrupted while trying to lock camera opening.", e);
+        }
+
+        if (bigEnough.size() > 0) {
+            final Size chosenSize = Collections.min(bigEnough, new CompareSizesByArea());
+            Log.d(TAG,"Chosen size: " + chosenSize.getWidth() + "x" + chosenSize.getHeight());
+            return chosenSize;
+        } else {
+            Log.d(TAG,"Couldn't find any suitable preview size");
+            return choices[0];
         }
     }
-
 
     @DebugLog
     private void closeCamera() {
@@ -311,18 +321,6 @@ public class CameraConnectionFragment extends Fragment {
         }
     }
 
-
-    @DebugLog
-    private void startBackgroundThread() {
-        backgroundThread = new HandlerThread("ImageListener");
-        backgroundThread.start();
-        backgroundHandler = new Handler(backgroundThread.getLooper());
-
-        inferenceThread = new HandlerThread("InferenceThread");
-        inferenceThread.start();
-        inferenceHandler = new Handler(inferenceThread.getLooper());
-    }
-
     @SuppressLint("LongLogTag")
     @DebugLog
     private void stopBackgroundThread() {
@@ -341,24 +339,12 @@ public class CameraConnectionFragment extends Fragment {
         }
     }
 
-    private final OnGetImageListener mOnGetPreviewListener = new OnGetImageListener();
-
-    private final CameraCaptureSession.CaptureCallback captureCallback =
-            new CameraCaptureSession.CaptureCallback() {
-                @Override
-                public void onCaptureProgressed(
-                        final CameraCaptureSession session,
-                        final CaptureRequest request,
-                        final CaptureResult partialResult) {
-                }
-
-                @Override
-                public void onCaptureCompleted(
-                        final CameraCaptureSession session,
-                        final CaptureRequest request,
-                        final TotalCaptureResult result) {
-                }
-            };
+    @Override
+    public void onPause() {
+        closeCamera();
+        stopBackgroundThread();
+        super.onPause();
+    }
 
     @SuppressLint("LongLogTag")
     @DebugLog
@@ -405,7 +391,7 @@ public class CameraConnectionFragment extends Fragment {
         } catch (final CameraAccessException e) {
             Log.d(TAG,"Exception!", e);
         }
-        mOnGetPreviewListener.initialize(getActivity().getApplicationContext(), getActivity().getAssets(), inferenceHandler);
+        mOnGetPreviewListener.initialize(getActivity().getApplicationContext(), inferenceHandler);
     }
 
     @DebugLog

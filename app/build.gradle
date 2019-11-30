@@ -11,6 +11,8 @@ android {
         versionCode 1
         versionName "${rootProject.ext.releaseVersionName}"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        renderscriptTargetApi 16
+        renderscriptSupportModeEnabled true
     }
     buildTypes {
         release {
@@ -27,15 +29,13 @@ repositories {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation project(':dlib')
     implementation 'androidx.appcompat:appcompat:1.0.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'com.google.android.material:material:1.0.0'
-    implementation 'com.github.dexafree:materiallist:3.0.1'
-    implementation project(':dlib')
     annotationProcessor "org.androidannotations:androidannotations:4.6.0"
     implementation "org.androidannotations:androidannotations-api:4.6.0"
-    implementation 'com.karumi:dexter:5.0.0'
-
+    implementation 'com.asksira.android:cameraviewplus:0.9.5'
+    implementation 'io.github.silvaren:easyrs:0.5.3'
     androidTestImplementation 'androidx.annotation:annotation:1.0.0'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test:rules:1.1.1'

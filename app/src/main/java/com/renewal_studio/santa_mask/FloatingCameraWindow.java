@@ -17,7 +17,6 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import java.lang.ref.WeakReference;
 
 public class FloatingCameraWindow {
