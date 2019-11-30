@@ -21,6 +21,12 @@
         app:maximumWidth="4000"
         app:useHighResPicture="false">
 
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:src="@tools:sample/avatars" />
+
     </com.google.android.cameraview.CameraView>
 
 </FrameLayout>
