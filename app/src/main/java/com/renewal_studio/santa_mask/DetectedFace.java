@@ -34,17 +34,17 @@ public class DetectedFace {
     private Handler mInferenceHandler;
     private Context mContext;
     private FaceDet mFaceDet;
-    private FloatingCameraWindow mWindow;
     private Paint mFaceLandmardkPaint;
     private int mframeNum = 0;
+    private CameraOverlay overlay;
 
     public void initialize(
             final Context context,
-            final Handler handler) {
+            final Handler handler, final CameraOverlay overlay) {
         this.mContext = context;
         this.mInferenceHandler = handler;
+        this.overlay = overlay;
         mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
-        mWindow = new FloatingCameraWindow(mContext);
         mFaceLandmardkPaint = new Paint();
         mFaceLandmardkPaint.setColor(Color.GREEN);
         mFaceLandmardkPaint.setStrokeWidth(2);
@@ -55,8 +55,6 @@ public class DetectedFace {
         synchronized (DetectedFace.this) {
             if (mFaceDet != null)
                 mFaceDet.release();
-            if (mWindow != null)
-                mWindow.release();
         }
     }
 
@@ -115,7 +113,10 @@ public class DetectedFace {
                             }
                         }
                         if (results.size() != 0) {
-                            for (final VisionDetRet ret : results) {
+                            overlay.setFaceResults(results);
+                            overlay.invalidate();
+
+/*                            for (final VisionDetRet ret : results) {
                                 float resizeRatio = 4.5f;
                                 Canvas canvas = new Canvas(mInversedBipmap);
                                 ArrayList<Point> landmarks = ret.getFaceLandmarks();
@@ -124,10 +125,9 @@ public class DetectedFace {
                                     int pointY = (int) (point.y * resizeRatio);
                                     canvas.drawCircle(pointX, pointY, 4, mFaceLandmardkPaint);
                                 }
-                            }
+                            }*/
                         }
                         mframeNum++;
-                        mWindow.setRGBBitmap(mInversedBipmap);
                         mIsComputing = false;
                     }
                 });

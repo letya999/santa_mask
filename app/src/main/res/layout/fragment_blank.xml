@@ -25,9 +25,14 @@
         app:maximumPreviewWidth="1280"
         app:maximumWidth="4000"
         app:useHighResPicture="false"
-        android:layout_gravity="bottom|end">
+        android:layout_gravity="bottom|end"/>
 
-    </com.google.android.cameraview.CameraView>
-
+    <com.renewal_studio.santa_mask.CameraOverlay
+        android:id="@+id/cameraOverlay"
+        android:background="@color/transparent"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
 </FrameLayout>

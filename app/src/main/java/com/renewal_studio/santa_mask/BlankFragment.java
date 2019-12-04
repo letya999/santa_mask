@@ -25,24 +25,21 @@ import com.google.android.cameraview.CameraViewImpl;
 import com.tzutalin.dlib.Constants;
 import com.tzutalin.dlib.FaceDet;
 import com.tzutalin.dlib.VisionDetRet;
-
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
-
-import hugo.weaving.DebugLog;
 import io.github.silvaren.easyrs.tools.Nv21Image;
 
 public class BlankFragment extends Fragment {
     RenderScript rs;
     CameraView cameraView;
-    ImageView imageView;
+    public static ImageView imageView;
     Bitmap bitmap;
     private HandlerThread backgroundThread;
     private Handler backgroundHandler;
     private HandlerThread inferenceThread;
     private Handler inferenceHandler;
     private final DetectedFace detectedFace = new DetectedFace();
+    CameraOverlay cameraOverlay;
 
     public BlankFragment() {}
 
@@ -61,6 +58,7 @@ public class BlankFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_blank, container, false);
         cameraView = view.findViewById(R.id.camera_view);
         imageView = view.findViewById(R.id.imageView);
+        cameraOverlay = view.findViewById(R.id.cameraOverlay);
         return view;
     }
 
@@ -68,8 +66,9 @@ public class BlankFragment extends Fragment {
     public void onResume() {
         super.onResume();
         startBackgroundThread();
-        detectedFace.initialize(getActivity().getApplicationContext(), inferenceHandler);
+        detectedFace.initialize(getActivity().getApplicationContext(), inferenceHandler, cameraOverlay);
         cameraView.start();
+        cameraOverlay.setPreview(cameraView);
         rs = RenderScript.create(getActivity().getApplicationContext());
         cameraView.setOnFrameListener(new CameraViewImpl.OnFrameListener() {
             @Override
@@ -85,7 +84,6 @@ public class BlankFragment extends Fragment {
         });
     }
 
-    @DebugLog
     private void startBackgroundThread() {
         backgroundThread = new HandlerThread("ImageListener");
         backgroundThread.start();
@@ -95,10 +93,10 @@ public class BlankFragment extends Fragment {
         inferenceHandler = new Handler(inferenceThread.getLooper());
     }
 
-
     @Override
     public void onPause() {
         cameraView.stop();
+        detectedFace.deInitialize();
         super.onPause();
     }
 
@@ -118,16 +116,18 @@ public class BlankFragment extends Fragment {
         private FaceDet mFaceDet;
         private Paint mFaceLandmardkPaint;
         private int mframeNum = 0;
+        private CameraOverlay overlay;
 
         public void initialize(
                 final Context context,
-                final Handler handler) {
+                final Handler handler, final CameraOverlay overlay) {
             this.mContext = context;
             this.mInferenceHandler = handler;
+            this.overlay = overlay;
             mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
             mFaceLandmardkPaint = new Paint();
-            mFaceLandmardkPaint.setColor(Color.RED);
-            mFaceLandmardkPaint.setStrokeWidth(3);
+            mFaceLandmardkPaint.setColor(Color.GREEN);
+            mFaceLandmardkPaint.setStrokeWidth(2);
             mFaceLandmardkPaint.setStyle(Paint.Style.STROKE);
         }
 
@@ -193,24 +193,15 @@ public class BlankFragment extends Fragment {
                                 }
                             }
                             if (results.size() != 0) {
-                                for (final VisionDetRet ret : results) {
-                                    float resizeRatio = 4.5f;
-                                    Canvas canvas = new Canvas(mInversedBipmap);
-                                    ArrayList<Point> landmarks = ret.getFaceLandmarks();
-                                    for (Point point : landmarks) {
-                                        int pointX = (int) (point.x * resizeRatio);
-                                        int pointY = (int) (point.y * resizeRatio);
-                                        canvas.drawCircle(pointX, pointY, 5, mFaceLandmardkPaint);
+                                getActivity().runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        overlay.setFaceResults(results);
+                                        overlay.invalidate();
                                     }
-                                }
+                                });
                             }
                             mframeNum++;
-                            getActivity().runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    imageView.setImageBitmap(mInversedBipmap);
-                                }
-                            });
                             mIsComputing = false;
                         }
                     });
