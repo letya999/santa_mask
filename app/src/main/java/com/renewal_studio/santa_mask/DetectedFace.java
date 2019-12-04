@@ -9,18 +9,13 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Point;
-import android.media.Image;
-import android.media.Image.Plane;
-import android.media.ImageReader;
 import android.os.Handler;
 import android.os.Trace;
-import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 import com.tzutalin.dlib.Constants;
 import com.tzutalin.dlib.FaceDet;
 import com.tzutalin.dlib.VisionDetRet;
-import com.tzutalin.dlibtest.ImageUtils;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,11 +27,6 @@ public class DetectedFace {
     private static final String TAG = "OnGetImageListener";
     private int mScreenRotation = 90;
     private List<VisionDetRet> results;
-    private int mPreviewWdith = 0;
-    private int mPreviewHeight = 0;
-    private byte[][] mYUVBytes;
-    private int[] mRGBBytes = null;
-    //private Bitmap mRGBframeBitmap = null;
     private Bitmap mCroppedBitmap = null;
     private Bitmap mResizedBitmap = null;
     private Bitmap mInversedBipmap = null;
@@ -77,7 +67,6 @@ public class DetectedFace {
         getOrient.getSize(point);
         int screen_width = point.x;
         int screen_height = point.y;
-        Log.d(TAG, String.format("screen size (%d,%d)", screen_width, screen_height));
         if (screen_width < screen_height) {
             orientation = Configuration.ORIENTATION_PORTRAIT;
             mScreenRotation = -90;
@@ -120,12 +109,10 @@ public class DetectedFace {
                         if (!new File(Constants.getFaceShapeModelPath()).exists()) {
                             FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_68_face_landmarks, Constants.getFaceShapeModelPath());
                         }
-                        if(mframeNum % 3 == 0){
-                            long startTime = System.currentTimeMillis();
+                        if(mframeNum % 3 == 0) {
                             synchronized (DetectedFace.this) {
                                 results = mFaceDet.detect(mResizedBitmap);
                             }
-                            long endTime = System.currentTimeMillis();
                         }
                         if (results.size() != 0) {
                             for (final VisionDetRet ret : results) {
@@ -139,14 +126,11 @@ public class DetectedFace {
                                 }
                             }
                         }
-
                         mframeNum++;
                         mWindow.setRGBBitmap(mInversedBipmap);
                         mIsComputing = false;
                     }
-
                 });
-
         Trace.endSection();
     }
 }

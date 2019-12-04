@@ -6,10 +6,15 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".BlankFragment">
 
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <com.google.android.cameraview.CameraView
         android:id="@+id/camera_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
         android:fitsSystemWindows="true"
         android:keepScreenOn="true"
         app:autoFocus="true"
@@ -19,13 +24,10 @@
         app:flash="off"
         app:maximumPreviewWidth="1280"
         app:maximumWidth="4000"
-        app:useHighResPicture="false">
-
-        <ImageView
-            android:id="@+id/imageView"
-            android:layout_width="100dp"
-            android:layout_height="100dp" />
+        app:useHighResPicture="false"
+        android:layout_gravity="bottom|end">
 
     </com.google.android.cameraview.CameraView>
+
 
 </FrameLayout>
