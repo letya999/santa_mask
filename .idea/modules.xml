@@ -5,6 +5,8 @@
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/dlib/dlib.iml" filepath="$PROJECT_DIR$/dlib/dlib.iml" />
       <module fileurl="file://$PROJECT_DIR$/santa_mask.iml" filepath="$PROJECT_DIR$/santa_mask.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/santa_mask-app.iml" filepath="$PROJECT_DIR$/app/santa_mask-app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/dlib/santa_mask-dlib.iml" filepath="$PROJECT_DIR$/dlib/santa_mask-dlib.iml" />
     </modules>
   </component>
 </project>
