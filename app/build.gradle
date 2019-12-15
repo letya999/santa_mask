@@ -15,6 +15,22 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         renderscriptTargetApi 16
         renderscriptSupportModeEnabled true
+
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+        }
+
+        externalNativeBuild {
+            cmake {
+                cFlags "-O3"
+                cppFlags "-std=c++11 -frtti -fexceptions"
+                arguments "-DANDROID_PLATFORM=android-16",
+                        "-DANDROID_TOOLCHAIN=clang",
+                        "-DANDROID_STL=c++_shared",
+                        "-DANDROID_CPP_FEATURES=rtti exceptions"
+            }
+        }
+
     }
     buildTypes {
         release {
@@ -22,6 +38,14 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+            version "3.10.2"
+        }
+    }
+
 }
 
 repositories {
